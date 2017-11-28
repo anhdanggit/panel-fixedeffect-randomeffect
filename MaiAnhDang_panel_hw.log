@@ -1,0 +1,459 @@
+-------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\utilisateur\iCloudDrive\TSE-EEE-S1\Panel\HW1\MaiAnhDang_panel_hw.log
+  log type:  text
+ opened on:  16 Nov 2017, 01:45:55
+
+. 
+. 
+. 
+. 
+. * Change the format to panel data
+. reshape long lwage educ black hisp expersq exper married union, i(nr) j(year)
+(note: j = 1980 1981 1982 1983 1984 1985 1986 1987)
+
+Data                               wide   ->   long
+-----------------------------------------------------------------------------
+Number of obs.                      545   ->    4360
+Number of variables                  65   ->      10
+j variable (8 values)                     ->   year
+xij variables:
+      lwage1980 lwage1981 ... lwage1987   ->   lwage
+         educ1980 educ1981 ... educ1987   ->   educ
+      black1980 black1981 ... black1987   ->   black
+         hisp1980 hisp1981 ... hisp1987   ->   hisp
+expersq1980 expersq1981 ... expersq1987   ->   expersq
+      exper1980 exper1981 ... exper1987   ->   exper
+married1980 married1981 ... married1987   ->   married
+      union1980 union1981 ... union1987   ->   union
+-----------------------------------------------------------------------------
+
+. 
+. * Create var of number of obs. periods for each individual
+. sort nr
+
+. by nr: gen numobs = _n
+
+. 
+. * Check the balance 
+. tab year
+
+    1980 to |
+       1987 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1980 |        545       12.50       12.50
+       1981 |        545       12.50       25.00
+       1982 |        545       12.50       37.50
+       1983 |        545       12.50       50.00
+       1984 |        545       12.50       62.50
+       1985 |        545       12.50       75.00
+       1986 |        545       12.50       87.50
+       1987 |        545       12.50      100.00
+------------+-----------------------------------
+      Total |      4,360      100.00
+
+. tab numobs
+
+     numobs |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |        545       12.50       12.50
+          2 |        545       12.50       25.00
+          3 |        545       12.50       37.50
+          4 |        545       12.50       50.00
+          5 |        545       12.50       62.50
+          6 |        545       12.50       75.00
+          7 |        545       12.50       87.50
+          8 |        545       12.50      100.00
+------------+-----------------------------------
+      Total |      4,360      100.00
+
+. 
+. * Data Manipulation (enable xtoverid)
+. 
+. // we have to create the dummies of years by hands, because unluckily xtoverid 
+. // has not supported auto factors 
+. // also we have to drop multicolinearity var manually, to make xtoverid works
+. 
+. gen year1980 = 0
+
+. gen year1981 = 0
+
+. gen year1982 = 0
+
+. gen year1983 = 0
+
+. gen year1984 = 0
+
+. gen year1985 = 0
+
+. gen year1986 = 0
+
+. gen year1987 = 0
+
+. 
+. replace year1980 = 1 if year == 1980
+(545 real changes made)
+
+. replace year1981 = 1 if year == 1981
+(545 real changes made)
+
+. replace year1982 = 1 if year == 1982
+(545 real changes made)
+
+. replace year1983 = 1 if year == 1983
+(545 real changes made)
+
+. replace year1984 = 1 if year == 1984
+(545 real changes made)
+
+. replace year1985 = 1 if year == 1985
+(545 real changes made)
+
+. replace year1986 = 1 if year == 1986
+(545 real changes made)
+
+. replace year1987 = 1 if year == 1987
+(545 real changes made)
+
+. 
+. * Basic summary statistics for the first year of observation:
+. describe
+
+Contains data
+  obs:         4,360                          
+ vars:            19                          
+ size:       226,720                          
+-------------------------------------------------------------------------------------------------------------------------------------
+              storage   display    value
+variable name   type    format     label      variable label
+-------------------------------------------------------------------------------------------------------------------------------------
+nr              int     %9.0g                 person identifier
+year            int     %9.0g                 1980 to 1987
+lwage           float   %9.0g                 log(wage)
+educ            byte    %9.0g                 years of schooling
+black           byte    %9.0g                 =1 if black
+hisp            byte    %9.0g                 =1 if Hispanic
+expersq         int     %9.0g                 exper^2
+exper           byte    %9.0g                 labor mkt experience
+married         byte    %9.0g                 =1 if married
+union           byte    %9.0g                 =1 if in union
+numobs          float   %9.0g                 
+year1980        float   %9.0g                 
+year1981        float   %9.0g                 
+year1982        float   %9.0g                 
+year1983        float   %9.0g                 
+year1984        float   %9.0g                 
+year1985        float   %9.0g                 
+year1986        float   %9.0g                 
+year1987        float   %9.0g                 
+-------------------------------------------------------------------------------------------------------------------------------------
+Sorted by: nr
+     Note: Dataset has changed since last saved.
+
+. summarize lwage educ black hisp exper expersq married union if year==1980
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+       lwage |        545    1.393477    .5575008  -1.113822   2.821783
+        educ |        545    11.76697    1.747585          3         16
+       black |        545    .1155963     .320034          0          1
+        hisp |        545    .1559633    .3631539          0          1
+       exper |        545    3.014679    1.654918          0         11
+-------------+---------------------------------------------------------
+     expersq |        545    11.82202    15.11389          0        121
+     married |        545    .1853211    .3889148          0          1
+       union |        545    .2513761    .4342028          0          1
+
+. 
+. * Declare individual and time dimensions:
+. xtset nr year
+       panel variable:  nr (strongly balanced)
+        time variable:  year, 1980 to 1987
+                delta:  1 unit
+
+. 
+. * Summary statistics of the main variables:
+. hist lwage
+(bin=36, start=-3.5790787, width=.21197051)
+
+. hist lwage if lwage > -1, fraction
+(bin=36, start=-.98120421, width=.13980734)
+
+. xtsum lwage educ exper expersq // overal, between, within variation
+
+Variable         |      Mean   Std. Dev.       Min        Max |    Observations
+-----------------+--------------------------------------------+----------------
+lwage    overall |  1.649147   .5326094  -3.579079    4.05186 |     N =    4360
+         between |             .3907468   .3333435   3.174173 |     n =     545
+         within  |             .3622636  -2.467201   3.204687 |     T =       8
+                 |                                            |
+educ     overall |  11.76697   1.746181          3         16 |     N =    4360
+         between |             1.747585          3         16 |     n =     545
+         within  |                    0   11.76697   11.76697 |     T =       8
+                 |                                            |
+exper    overall |  6.514679   2.825873          0         18 |     N =    4360
+         between |             1.654918        3.5       14.5 |     n =     545
+         within  |             2.291551   3.014679   10.01468 |     T =       8
+                 |                                            |
+expersq  overall |  50.42477   40.78199          0        324 |     N =    4360
+         between |             26.35134       17.5      215.5 |     n =     545
+         within  |              31.1431  -44.07523   158.9248 |     T =       8
+
+. 
+. 
+. 
+. 
+. 
+. **** Pooled OLS
+. global xlist black hisp married union
+
+. global yearlist year1981 year1982 year1983 year1984 year1985 year1986 year1987 //drop year1980
+
+. 
+. reg lwage educ exper expersq $xlist $yearlist  // usual
+
+      Source |       SS           df       MS      Number of obs   =     4,360
+-------------+----------------------------------   F(14, 4345)     =     72.46
+       Model |  234.048277        14  16.7177341   Prob > F        =    0.0000
+    Residual |  1002.48136     4,345  .230720682   R-squared       =    0.1893
+-------------+----------------------------------   Adj R-squared   =    0.1867
+       Total |  1236.52964     4,359  .283672779   Root MSE        =    .48033
+
+------------------------------------------------------------------------------
+       lwage |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        educ |   .0913498   .0052374    17.44   0.000     .0810819    .1016177
+       exper |   .0672345   .0136948     4.91   0.000     .0403856    .0940834
+     expersq |  -.0024117     .00082    -2.94   0.003    -.0040192   -.0008042
+       black |  -.1392342   .0235796    -5.90   0.000    -.1854622   -.0930062
+        hisp |   .0160195   .0207971     0.77   0.441    -.0247535    .0567925
+     married |   .1082529   .0156894     6.90   0.000     .0774937    .1390122
+       union |   .1824613   .0171568    10.63   0.000     .1488253    .2160973
+    year1981 |     .05832   .0303536     1.92   0.055    -.0011886    .1178286
+    year1982 |   .0627744   .0332141     1.89   0.059    -.0023421    .1278909
+    year1983 |   .0620117   .0366601     1.69   0.091    -.0098608    .1338843
+    year1984 |   .0904672   .0400907     2.26   0.024      .011869    .1690654
+    year1985 |   .1092463   .0433525     2.52   0.012     .0242533    .1942393
+    year1986 |   .1419596    .046423     3.06   0.002     .0509469    .2329723
+    year1987 |   .1738334    .049433     3.52   0.000     .0769194    .2707474
+       _cons |   .0920558   .0782701     1.18   0.240    -.0613935    .2455051
+------------------------------------------------------------------------------
+
+. reg lwage educ exper expersq $xlist $yearlist, cluster(nr)
+
+Linear regression                               Number of obs     =      4,360
+                                                F(14, 544)        =      47.10
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.1893
+                                                Root MSE          =     .48033
+
+                                   (Std. Err. adjusted for 545 clusters in nr)
+------------------------------------------------------------------------------
+             |               Robust
+       lwage |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        educ |   .0913498   .0110822     8.24   0.000     .0695807    .1131189
+       exper |   .0672345   .0195958     3.43   0.001     .0287417    .1057273
+     expersq |  -.0024117   .0010252    -2.35   0.019    -.0044255   -.0003979
+       black |  -.1392342   .0505238    -2.76   0.006    -.2384798   -.0399887
+        hisp |   .0160195   .0390781     0.41   0.682     -.060743     .092782
+     married |   .1082529    .026034     4.16   0.000     .0571135    .1593924
+       union |   .1824613   .0274435     6.65   0.000     .1285531    .2363695
+    year1981 |     .05832    .028228     2.07   0.039     .0028707    .1137693
+    year1982 |   .0627744   .0369735     1.70   0.090    -.0098538    .1354027
+    year1983 |   .0620117    .046248     1.34   0.181    -.0288348    .1528583
+    year1984 |   .0904672    .057988     1.56   0.119    -.0234407     .204375
+    year1985 |   .1092463   .0668474     1.63   0.103    -.0220644     .240557
+    year1986 |   .1419596   .0762348     1.86   0.063     -.007791    .2917102
+    year1987 |   .1738334   .0852056     2.04   0.042     .0064611    .3412057
+       _cons |   .0920558   .1609365     0.57   0.568    -.2240773    .4081888
+------------------------------------------------------------------------------
+
+. 
+. **** Fixed Effect
+. xtreg lwage educ expersq $xlist $yearlist exper , fe cluster(nr)
+note: educ omitted because of collinearity
+note: black omitted because of collinearity
+note: hisp omitted because of collinearity
+note: exper omitted because of collinearity
+
+Fixed-effects (within) regression               Number of obs     =      4,360
+Group variable: nr                              Number of groups  =        545
+
+R-sq:                                           Obs per group:
+     within  = 0.1806                                         min =          8
+     between = 0.0286                                         avg =        8.0
+     overall = 0.0888                                         max =          8
+
+                                                F(10,544)         =      46.59
+corr(u_i, Xb)  = -0.1222                        Prob > F          =     0.0000
+
+                                   (Std. Err. adjusted for 545 clusters in nr)
+------------------------------------------------------------------------------
+             |               Robust
+       lwage |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        educ |          0  (omitted)
+     expersq |  -.0051855   .0008102    -6.40   0.000    -.0067771   -.0035939
+       black |          0  (omitted)
+        hisp |          0  (omitted)
+     married |   .0466804   .0210038     2.22   0.027     .0054218    .0879389
+       union |   .0800019   .0227431     3.52   0.000     .0353268    .1246769
+    year1981 |   .1511912   .0255648     5.91   0.000     .1009733    .2014091
+    year1982 |   .2529709   .0286624     8.83   0.000     .1966684    .3092733
+    year1983 |   .3544437   .0348608    10.17   0.000     .2859655     .422922
+    year1984 |   .4901148   .0454581    10.78   0.000     .4008199    .5794097
+    year1985 |   .6174823   .0568088    10.87   0.000     .5058908    .7290737
+    year1986 |   .7654966    .071244    10.74   0.000     .6255495    .9054436
+    year1987 |   .9250249   .0840563    11.00   0.000     .7599103     1.09014
+       exper |          0  (omitted)
+       _cons |   1.426019   .0209824    67.96   0.000     1.384802    1.467235
+-------------+----------------------------------------------------------------
+     sigma_u |  .39176195
+     sigma_e |  .35099001
+         rho |  .55472817   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. 
+. **** Random Effect
+. xtreg lwage educ exper expersq $xlist $yearlist, re cluster(nr)
+
+Random-effects GLS regression                   Number of obs     =      4,360
+Group variable: nr                              Number of groups  =        545
+
+R-sq:                                           Obs per group:
+     within  = 0.1799                                         min =          8
+     between = 0.1860                                         avg =        8.0
+     overall = 0.1830                                         max =          8
+
+                                                Wald chi2(14)     =     610.97
+corr(u_i, X)   = 0 (assumed)                    Prob > chi2       =     0.0000
+
+                                   (Std. Err. adjusted for 545 clusters in nr)
+------------------------------------------------------------------------------
+             |               Robust
+       lwage |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        educ |   .0918763   .0111455     8.24   0.000     .0700315    .1137211
+       exper |   .1057545    .016379     6.46   0.000     .0736522    .1378568
+     expersq |  -.0047239   .0007917    -5.97   0.000    -.0062756   -.0031723
+       black |  -.1393767   .0509251    -2.74   0.006    -.2391882   -.0395653
+        hisp |   .0217317   .0399157     0.54   0.586    -.0565015     .099965
+     married |    .063986   .0189722     3.37   0.001     .0268013    .1011708
+       union |   .1061344    .020844     5.09   0.000      .065281    .1469879
+    year1981 |    .040462   .0275684     1.47   0.142    -.0135711    .0944951
+    year1982 |   .0309212   .0350705     0.88   0.378    -.0378158    .0996581
+    year1983 |   .0202806    .043861     0.46   0.644    -.0656853    .1062466
+    year1984 |   .0431187   .0555848     0.78   0.438    -.0658254    .1520628
+    year1985 |   .0578155   .0645584     0.90   0.370    -.0687167    .1843476
+    year1986 |   .0919476   .0747028     1.23   0.218    -.0544671    .2383623
+    year1987 |   .1349289   .0848618     1.59   0.112    -.0313971    .3012549
+       _cons |   .0235864   .1599577     0.15   0.883     -.289925    .3370977
+-------------+----------------------------------------------------------------
+     sigma_u |  .32460315
+     sigma_e |  .35099001
+         rho |  .46100216   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. 
+. //xttest0 ** for the RE vs POLS
+. 
+. **** Hausman Test: RE vs. FE
+. xtoverid // p-val < 0.05 reject RE
+
+Test of overidentifying restrictions: fixed vs random effects
+Cross-section time-series model: xtreg re  robust cluster(nr)
+Sargan-Hansen statistic  44.553  Chi-sq(9)    P-value = 0.0000
+
+. 
+. **** Hausman-Taylor model
+. xtreg lwage educ exper expersq $xlist, fe cluster(nr)
+note: educ omitted because of collinearity
+note: black omitted because of collinearity
+note: hisp omitted because of collinearity
+
+Fixed-effects (within) regression               Number of obs     =      4,360
+Group variable: nr                              Number of groups  =        545
+
+R-sq:                                           Obs per group:
+     within  = 0.1780                                         min =          8
+     between = 0.0005                                         avg =        8.0
+     overall = 0.0638                                         max =          8
+
+                                                F(4,544)          =     107.94
+corr(u_i, Xb)  = -0.1139                        Prob > F          =     0.0000
+
+                                   (Std. Err. adjusted for 545 clusters in nr)
+------------------------------------------------------------------------------
+             |               Robust
+       lwage |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        educ |          0  (omitted)
+       exper |   .1168467    .010713    10.91   0.000     .0958028    .1378906
+     expersq |  -.0043009   .0006861    -6.27   0.000    -.0056486   -.0029532
+       black |          0  (omitted)
+        hisp |          0  (omitted)
+     married |   .0453033   .0210041     2.16   0.031     .0040442    .0865625
+       union |   .0820871   .0228266     3.60   0.000      .037248    .1269262
+       _cons |    1.06488   .0366294    29.07   0.000     .9929274    1.136832
+-------------+----------------------------------------------------------------
+     sigma_u |   .4000539
+     sigma_e |  .35125535
+         rho |   .5646785   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+
+. 
+. xthtaylor lwage educ exper expersq $xlist, endog(educ) 
+
+Hausman-Taylor estimation                       Number of obs     =      4,360
+Group variable: nr                              Number of groups  =        545
+
+                                                Obs per group:
+                                                              min =          8
+                                                              avg =          8
+                                                              max =          8
+
+Random effects u_i ~ i.i.d.                     Wald chi2(7)      =     872.42
+                                                Prob > chi2       =     0.0000
+
+------------------------------------------------------------------------------
+       lwage |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+TVexogenous  |
+       exper |   .1115918   .0082768    13.48   0.000     .0953695    .1278141
+     expersq |  -.0039835   .0005981    -6.66   0.000    -.0051558   -.0028112
+     married |   .0608646   .0168374     3.61   0.000     .0278638    .0938653
+       union |   .1064973    .017843     5.97   0.000     .0715256     .141469
+TIexogenous  |
+       black |  -.1397199   .0487558    -2.87   0.004    -.2352795   -.0441602
+        hisp |   .0329106   .0451865     0.73   0.466    -.0556534    .1214746
+TIendogenous |
+        educ |   .1143529   .0156657     7.30   0.000     .0836486    .1450572
+             |
+       _cons |  -.2642464   .1893647    -1.40   0.163    -.6353945    .1069016
+-------------+----------------------------------------------------------------
+     sigma_u |  .33286998
+     sigma_e |  .35107115
+         rho |  .47340664   (fraction of variance due to u_i)
+------------------------------------------------------------------------------
+Note: TV refers to time varying; TI refers to time invariant.
+
+. 
+. **** Test: HT vs. FE
+. xtoverid
+
+Test of overidentifying restrictions: 
+Cross-section time-series model: xthtaylor htaylor   
+Sargan-Hansen statistic  25.179  Chi-sq(3)    P-value = 0.0000
+
+. 
+. ** Hausman-Taylor estimator has the stronger assumption on exgeneous var
+. ** and the independence of some regressor on fixed-effect
+. ** Rejection implies that these strong assumption is not valid
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\utilisateur\iCloudDrive\TSE-EEE-S1\Panel\HW1\MaiAnhDang_panel_hw.log
+  log type:  text
+ closed on:  16 Nov 2017, 01:46:01
+-------------------------------------------------------------------------------------------------------------------------------------
